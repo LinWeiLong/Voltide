@@ -99,6 +99,15 @@ namespace Voltide.Providers
                 byte[] report = NewestReport(WaitForReport());
                 if (report == null)
                 {
+                    // A timed-out read used to leave the handle unable to see the
+                    // reports still arriving. Open a fresh one before giving up.
+                    Close();
+                    _session = new HidSession(device.HidPath, 19, 0, true);
+                    _openPath = device.HidPath;
+                    report = NewestReport(FirstWaitMs);
+                }
+                if (report == null)
+                {
                     if (_last != null && _last.Percent.HasValue &&
                         (DateTime.Now - _lastAt).TotalSeconds < AwakeSeconds)
                     {
